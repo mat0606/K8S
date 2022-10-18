@@ -1,0 +1,11 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: splunk-pvc-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: k8s-file-nfs 
+  resources:
+    requests:
+      storage: 1Gi
