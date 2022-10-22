@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: splunkforwarder
+  labels:
+    app: splunkforwarder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: splunkforwarder
+  template:
+    metadata:
+      labels:
+        app: splunkforwarder
+    spec:
+      initContainers:
+       - name: volume-permissions
+         image: busybox
+         imagePullPolicy: IfNotPresent
+         command: ['sh', '-c', 'cp /configs/* /opt/splunkforwarder/etc/system/local/']
+         volumeMounts:
+         - mountPath: /configs
+           name: configs
+         - name: confs
+           mountPath: /opt/splunkforwarder/etc/system/local
+      containers:
+       - name: splunk-uf
+         image: splunk/universalforwarder:latest
+         imagePullPolicy: IfNotPresent
+         env:
+         - name: SPLUNK_START_ARGS
+           value: --accept-license
+         - name: SPLUNK_PASSWORD
+           value: nutanix/4u
+         - name: SPLUNK_USER
+           value: splunk
+         - name: SPLUNK_CMD
+           value: add monitor /var/log/
+         volumeMounts:
+         - name: container-logs
+           mountPath: /var/log
+         - name: confs
+           mountPath: /opt/splunkforwarder/etc/system/local
+      volumes:
+       - name: container-logs
+         persistentVolumeClaim:
+            claimName: splunk-pvc-claim
+       - name: confs
+         emptyDir: {}
+       - name: configs
+         configMap:
+           name: splunk-configmap
+           defaultMode: 0777

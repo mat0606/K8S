@@ -1,0 +1,24 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: splunk-configmap
+data:
+  outputs.conf: |
+    [indexAndForward]
+    index = false
+
+    [tcpout]
+    defaultGroup = splunk-uat
+    forwardedindex.filter.disable = true
+    indexAndForward = false
+
+    [tcpout:splunk-uat]
+    server = 10.38.218.80:9997
+    useACK = true
+    autoLB = true
+
+  inputs.conf: |
+    [monitor:///var/log/*.log]
+    disabled = false
+    sourcetype = log
+    index = nke_index
