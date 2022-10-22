@@ -21,7 +21,7 @@ spec:
          command: ['sh', '-c', 'cp /configs/* /opt/splunkforwarder/etc/system/local/']
          volumeMounts:
          - mountPath: /configs
-           name: configs
+           name: splunk-configmap
          - name: confs
            mountPath: /opt/splunkforwarder/etc/system/local
       containers:
@@ -48,7 +48,7 @@ spec:
             claimName: splunk-pvc-claim
        - name: confs
          emptyDir: {}
-       - name: configs
+       - name: splunk-configmap 
          configMap:
            name: splunk-configmap
            defaultMode: 0777
