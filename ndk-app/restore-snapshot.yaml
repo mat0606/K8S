@@ -1,0 +1,8 @@
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationRestoreRequest
+metadata:
+  name: restore-mysql-snapshot-20231212
+  namespace: wordpress-dr
+spec:
+  applicationSnapshotName: wordpress-20231212
+
