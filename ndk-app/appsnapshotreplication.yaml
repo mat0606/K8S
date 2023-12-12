@@ -1,0 +1,9 @@
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationSnapshotReplication
+metadata:
+  name: replicate-wordpress-20231212
+  namespace: wordpress
+spec:
+  applicationSnapshotName: wordpress-20231212
+  replicationTargetName: ocp104ipi
+

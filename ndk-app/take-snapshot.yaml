@@ -1,7 +1,7 @@
 apiVersion: dataservices.nutanix.com/v1alpha1
 kind: ApplicationSnapshot
 metadata:
-  name: wordpress-20231212
+  name: mysql-20231212
   namespace: wordpress
 spec:
   source:
