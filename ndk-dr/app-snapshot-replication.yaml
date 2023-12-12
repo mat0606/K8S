@@ -1,0 +1,8 @@
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationSnapshotReplication
+metadata:
+  name: replicate-mysql-snapshot-20231212-2318
+  namespace: mysql
+spec:
+  applicationSnapshotName: mysql-20231212-2255 
+  replicationTargetName: ocp104ipi
