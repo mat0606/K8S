@@ -4,4 +4,4 @@ metadata:
   name: restore-mysql-snapshot-1
   namespace: mysql-dr
 spec:
-  applicationSnapshotName: mysql-20231212-2255
+  applicationSnapshotName: mysql-20231213-0024

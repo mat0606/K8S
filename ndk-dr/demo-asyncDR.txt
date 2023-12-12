@@ -1,0 +1,47 @@
+1.  In the Source K8S cluster
+
+a.  Create a new application snapshot
+
+vi /home/centos/K8S/ndk-dr/take-snapshot.yaml
+
+oc -n mysql apply -f /home/centos/K8S/ndk-dr/take-snapshot.yaml
+
+b. Observe the application snapshot was created
+
+oc -n mysql get applicationsnapshots
+
+c.  Create application snapshot replication
+
+vi /home/centos/K8S/ndk-dr/app-snapshot-replication.yaml
+
+oc -n mysql apply -f /home/centos/K8S/ndk-dr/app-snapshot-replication.yaml
+
+d.  Observe the application snapshot replication is ready
+
+oc -n mysql get applicationsnapshotreplication
+
+2.  In the DR K8S cluster 
+
+a.  observe the application snapshots were replicated
+
+oc -n mysql-dr get applicationsnapshots
+
+b.  Restore the application 
+
+vi /home/centos/K8S/ndk-dr/dst-ocp/restore-snapshot.yaml
+
+oc -n mysql-dr apply -f /home/centos/K8S/ndk-dr/dst-ocp/restore-snapshot.yaml
+
+c.  Watch and observe the pods are started
+
+watch oc -n mysql-dr get po 
+
+3.  Cleanup
+
+/home/centos/K8S/ndk-dr/dst-ocp/cleanup-dr.sh
+
+
+
+
+
+
