@@ -1,0 +1,10 @@
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationSnapshot
+metadata:
+  name: mysql-20231212-2255
+  namespace: mysql
+spec:
+  source:
+    applicationRef:
+      name: mysql
+      namespace: mysql
