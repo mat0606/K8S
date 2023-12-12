@@ -1,0 +1,7 @@
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationRestoreRequest
+metadata:
+  name: restore-mysql-snapshot-1
+  namespace: mysql-dr
+spec:
+  applicationSnapshotName: mysql-20231212-2255

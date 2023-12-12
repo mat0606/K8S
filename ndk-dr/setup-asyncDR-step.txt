@@ -1,0 +1,249 @@
+Reference: https://docs.google.com/document/d/1fYuOmGslwKz7BIWBe3tr-yYgPSRsiCNCNmxhT_3EHV4/edit
+
+1.  Creation from the destination k8s cluster
+
+
+kubectl create ns mysql-dr
+
+Create a service account
+
+kubectl -n mysql-dr apply -f - <<EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nysql-dr-sa
+  namespace: mysql-dr
+EOF
+
+Create a file name serviceaccount-secret.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+ name: mysql-dr-sa
+ namespace: mysql-dr
+secrets:
+ - name: mysql-dr-sa-secret
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+ name: mysql-dr-sa-secret
+ namespace: mysql-dr
+ annotations:
+   kubernetes.io/service-account.name: "mysql-dr-sa"
+
+oc -n mysql-dr apply -f serviceaccount-secret.yaml
+
+Setup roles and roles binding
+
+kubectl apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bcdr-cluster-role
+rules:
+- apiGroups: ["dataservices.nutanix.com"]
+  resources: ["applicationsnapshotcontents", "applicationsnapshotcontents/status"]
+  verbs: ["create", "update", "get"]
+- apiGroups: ["dataservices.nutanix.com"]
+  resources: ["storageclusters"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "update"]  
+EOF
+
+create role to the dr namespace
+
+kubectl -n mysql-dr apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: mysql-dr
+  name: mysql-dr-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+EOF
+
+Create a ClusterRoleBinding to associate the bcdr-cluster-role created in step (a) as follows
+
+kubectl  apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: bcdr-cluster-role-binding
+subjects:
+- kind: ServiceAccount
+  name: mysql-dr-sa
+  apiGroup: ""
+  namespace: mysql-dr
+roleRef:
+  kind: ClusterRole
+  name: bcdr-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+create role binding to mysql-dr role
+
+kubectl -n mysql-dr  apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mysql-dr-role-binding
+  namespace: mysql-dr
+subjects:
+- kind: ServiceAccount
+  name: mysql-dr-sa
+  apiGroup: ""
+  namespace: mysql-dr
+roleRef:
+  kind: Role
+  name: mysql-dr-role
+  apiGroup: ""
+EOF
+
+install krew (https://krew.sigs.k8s.io/docs/user-guide/setup/install/)
+
+(
+  set -x; cd "$(mktemp -d)" &&
+  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+  KREW="krew-${OS}_${ARCH}" &&
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+  tar zxvf "${KREW}.tar.gz" &&
+  ./"${KREW}" install krew
+)
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+kubectl krew update
+
+Install view-serviceaccount-kubeconfig
+
+kubectl krew install view-serviceaccount-kubeconfig
+
+https://github.com/superbrothers/kubectl-view-serviceaccount-kubeconfig-plugin
+
+
+kubectl view-serviceaccount-kubeconfig  mysql-dr-sa -n mysql-dr -o json > mysql-dr-kubeconfig.json
+
+
+
+
+
+2.  Creation from the source k8s cluster
+
+kubectl create ns mysql  
+
+
+oc create secret docker-registry regcred --docker-server=docker.io --docker-username=mat0606 --docker-password='Redapple123' --docker-email=mat0606@hotmail.com -n mysql
+
+oc -n mysql apply -f mysql2.yaml
+
+watch oc -n mysql get po
+
+kubectl create secret generic mysql-dr-secret -n mysql --from-file=KUBECONFIG=/home/centos/K8S/ndk-dr/dst-ocp/mysql-dr-kubeconfig.json
+
+Create a replication target with a meaningful name.
+
+kubectl apply -f - <<EOF
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ReplicationTarget
+metadata:
+  name: ocp104ipi
+  namespace: mysql
+spec:
+  targetClusterSecretRef:
+    name: mysql-dr-secret
+    key: KUBECONFIG
+EOF
+
+nslookup api.ocp104ipi.ntnxlab.local
+
+Check that the replication target is 'Ready'
+
+kubectl get replicationtargets -n mysql
+
+Define the protection
+
+kubectl  apply -f - <<EOF
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: Application
+metadata:
+  name: mysql
+  namespace: mysql
+spec:
+  applicationSelector:
+EOF
+
+
+Take an application snapshot
+
+
+create a file named: take-snapshot.yaml
+
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationSnapshot
+metadata:
+  name: mysql-20231212-2255
+  namespace: mysql
+spec:
+  source:
+    applicationRef:
+      name: mysql
+      namespace: mysql
+
+
+oc -n mysql apply -f take-snapshot.yaml
+
+Verify the application snapshot is ready
+
+oc -n mysql get applicationsnapshots
+
+Setup application snapshot replication
+
+create a file named app-snapshot-replication.yaml
+
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationSnapshotReplication
+metadata:
+  name: replicate-mysql-snapshot-20231212-2318
+  namespace: mysql
+spec:
+  applicationSnapshotName: mysql-20231212-2255
+  replicationTargetName: ocp104ipi
+
+oc -n mysql apply -f app-snapshot-replication.yaml
+
+Verify the application snapshot replication is ready
+
+oc -n mysql get applicationsnapshotreplication
+
+3.  These steps are configured in the destination/DR cluster
+
+oc -n mysql-dr get applicationsnapshots
+
+create a file named restore-snapshot.yaml
+
+
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: ApplicationRestoreRequest
+metadata:
+  name: restore-mysql-snapshot-1
+  namespace: mysql-dr
+spec:
+  applicationSnapshotName: mysql-20231212-2255
+
+
+oc -n mysql-dr apply -f restore-snapshot.yaml
+
+watch oc -n mysql-dr get po
+
+
+
+
+
