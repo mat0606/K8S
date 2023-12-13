@@ -1,0 +1,130 @@
+# Copyright 2023 Nutanix Inc
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "chart.fullname" . }}-controller-manager
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chart.fullname" . }}-controller-manager
+  labels:
+    control-plane: controller-manager
+  {{- include "chart.labels" . | nindent 4 }}
+  {{- with .Values.deployment.customLabels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+    {{- include "chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+      {{- include "chart.selectorLabels" . | nindent 8 }}
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: control-plane
+                      operator: In
+                      values:
+                        - controller-manager
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+      containers:
+      - args:
+        - --config=controller_manager_config.yaml
+        command:
+        - /manager
+        env:
+        - name: CSI_SECRET_DIR
+          value: {{ .Values.config.secret.dir }}
+        image: {{ .Values.manager.repository }}:{{ .Values.manager.tag
+          | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.manager.pullPolicy }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources: {{- toYaml .Values.deployment.manager.resources | nindent 10
+          }}
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+        - mountPath: /controller_manager_config.yaml
+          name: manager-config
+          subPath: controller_manager_config.yaml
+        - mountPath: {{ .Values.config.secret.dir }}
+          name: pc-secret
+          readOnly: true
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=0
+        image: {{ .Values.kubeRbacProxy.repository }}:{{ .Values.kubeRbacProxy.tag
+          | default .Chart.AppVersion }}
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        resources: {{- toYaml .Values.deployment.kubeRbacProxy.resources | nindent
+          10 }}
+      {{- with .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      priorityClassName: system-cluster-critical
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: {{ include "chart.fullname" . }}-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          {{- if (eq .Values.tls.mode "SELF_SIGNED")}}
+          secretName: webhook-server-cert
+          {{- else }}
+          secretName: {{ .Values.tls.secretName }}
+          {{- end }}
+      - configMap:
+          name: {{ include "chart.fullname" . }}-manager-config
+        name: manager-config
+      - name: pc-secret
+        secret:
+          defaultMode: 420
+          secretName: {{ .Values.config.secret.name }}

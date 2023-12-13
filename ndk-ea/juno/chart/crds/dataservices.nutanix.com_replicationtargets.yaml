@@ -1,0 +1,158 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: replicationtargets.dataservices.nutanix.com
+spec:
+  group: dataservices.nutanix.com
+  names:
+    kind: ReplicationTarget
+    listKind: ReplicationTargetList
+    plural: replicationtargets
+    singular: replicationtarget
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Name of the replication target
+      jsonPath: .status.clusterName
+      name: Target Name
+      type: string
+    - description: Address of the replication target
+      jsonPath: .status.clusterEndpoint
+      name: Target Endpoint
+      type: string
+    - description: State of the replication target
+      jsonPath: .status.state
+      name: State
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ReplicationTarget is the Schema for the replicationtargets API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReplicationTargetSpec defines the desired state of ReplicationTarget
+            properties:
+              setupForSyncVolumeReplication:
+                description: Setup for synchronous replication of the persistent volumes
+                  at the storage layer.
+                type: boolean
+              targetClusterSecretRef:
+                description: Secret containing the target K8s cluster's kubeconfig.
+                properties:
+                  key:
+                    description: key is the name of the key to lookup in the secret.
+                    type: string
+                  name:
+                    description: name is the metadata.name of the referenced secret.
+                    type: string
+                required:
+                - key
+                - name
+                type: object
+            required:
+            - targetClusterSecretRef
+            type: object
+          status:
+            description: ReplicationTargetStatus defines the observed state of ReplicationTarget
+            properties:
+              clusterEndpoint:
+                description: Address of the cluster.
+                type: string
+              clusterName:
+                description: Name of the cluster.
+                type: string
+              error:
+                description: error is the last observed error when checking the health
+                  of the replication target. Upon success after retry, this error
+                  field will be cleared.
+                properties:
+                  message:
+                    description: 'message is a string detailing the encountered error.
+                      NOTE: message may be logged, and it should not contain sensitive
+                      information.'
+                    type: string
+                  reason:
+                    description: reason contains a programmatic identifier indicating
+                      the reason for the error.
+                    type: string
+                  time:
+                    description: time is the timestamp when the error was encountered.
+                    format: date-time
+                    type: string
+                type: object
+              namespace:
+                description: Namespace in the context.
+                type: string
+              state:
+                description: state of the replication target as defined by the ReplicationTargetState
+                  enum.
+                type: string
+              storageReplicationTopology:
+                description: Storage clusters providing storage to the target.
+                properties:
+                  canDoSyncVolumeReplication:
+                    description: canDoSyncVolumeReplication specifies if synchronous
+                      replication of volumes is possible.
+                    type: boolean
+                  localStorageClusters:
+                    description: localStorageClusters are the storage clusters backing
+                      the local Kubernetes cluster.
+                    items:
+                      description: StorageClusterSpec defines how a storage cluster
+                        can be identified in underlying infrastructure.
+                      properties:
+                        availabilityZoneHandle:
+                          description: Availability Zone Handle to uniquely identify
+                            replication target. Required for LTSS or if this storage
+                            cluster is used for replication.
+                          type: string
+                        handle:
+                          description: Cluster identifier i.e. Prism Element uuid.
+                            This is optional if storage cluster is LTSS.
+                          type: string
+                      type: object
+                    type: array
+                  remoteStorageClusters:
+                    description: remoteStorageClusters are the storage clusters backing
+                      the remote Kubernetes cluster.
+                    items:
+                      description: StorageClusterSpec defines how a storage cluster
+                        can be identified in underlying infrastructure.
+                      properties:
+                        availabilityZoneHandle:
+                          description: Availability Zone Handle to uniquely identify
+                            replication target. Required for LTSS or if this storage
+                            cluster is used for replication.
+                          type: string
+                        handle:
+                          description: Cluster identifier i.e. Prism Element uuid.
+                            This is optional if storage cluster is LTSS.
+                          type: string
+                      type: object
+                    type: array
+                type: object
+              subjectName:
+                description: Name of the subject.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

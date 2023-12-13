@@ -1,0 +1,71 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: storageclusters.dataservices.nutanix.com
+spec:
+  group: dataservices.nutanix.com
+  names:
+    kind: StorageCluster
+    listKind: StorageClusterList
+    plural: storageclusters
+    singular: storagecluster
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: StorageCluster provides storage capacity. This is the entitiy
+          to which storage policies are applied. The effects of a storage policy is
+          recorded in status.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: StorageClusterSpec defines how a storage cluster can be identified
+              in underlying infrastructure.
+            properties:
+              availabilityZoneHandle:
+                description: Availability Zone Handle to uniquely identify replication
+                  target. Required for LTSS or if this storage cluster is used for
+                  replication.
+                type: string
+              handle:
+                description: Cluster identifier i.e. Prism Element uuid. This is optional
+                  if storage cluster is LTSS.
+                type: string
+            type: object
+          status:
+            description: StorageClusterStatus defines the observed state of StorageCluster
+            properties:
+              message:
+                description: A human-readable message indicating details about why
+                  the cluster is in this state.
+                type: string
+              reason:
+                description: Reason is a brief CamelCase string that describes any
+                  failure and is meant for machine parsing and tidy display in the
+                  CLI.
+                type: string
+            required:
+            - message
+            - reason
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,58 @@
+# Copyright 2021 Nutanix Inc
+# 
+# example usage: kubectl create -f <this_file>
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nutanix-csi-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nutanix-csi-metrics
+spec:
+  type: ClusterIP
+  selector:
+    app: nutanix-csi-controller
+  ports:
+    - name: provisioner
+      port: 9809
+      targetPort: 9809
+      protocol: TCP
+    - name: attacher
+      port: 9810
+      targetPort: 9810
+      protocol: TCP
+    - name: resizer
+      port: 9811
+      targetPort: 9811
+      protocol: TCP
+    - name: snapshotter
+      port: 9812
+      targetPort: 9812
+      protocol: TCP
+{{- if eq .Values.servicemonitor.enabled true }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+{{- with .Values.servicemonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+  name: nutanix-csi-driver
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpoints:
+  - interval: 30s
+    port: provisioner
+  - interval: 30s
+    port: resizer
+  - interval: 30s
+    port: attacher
+  - interval: 30s
+    port: snapshotter
+  selector:
+    matchLabels:
+      app: nutanix-csi-metrics
+{{- end }}

@@ -1,0 +1,31 @@
+# Copyright 2023 Nutanix Inc
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chart.fullname" . }}-manager-config
+  labels:
+  {{- include "chart.labels" . | nindent 4 }}
+data:
+  controller_manager_config.yaml: |
+    apiVersion: config.dataservices.nutanix.com/v1alpha1
+    kind: DataServicesConfig
+    health:
+      healthProbeBindAddress: {{ .Values.config.controllerManagerConfig.health.healthProbeBindAddress
+        | quote }}
+    leaderElection:
+      leaderElect: {{ .Values.config.controllerManagerConfig.leaderElection.leaderElect
+        }}
+      resourceName: {{ .Values.config.controllerManagerConfig.leaderElection.resourceName
+        | quote }}
+    metrics:
+      bindAddress: {{ .Values.config.controllerManagerConfig.metrics.bindAddress
+        | quote }}
+    webhook:
+      port: {{ .Values.config.controllerManagerConfig.webhook.port }}
+      host: {{ .Values.config.controllerManagerConfig.webhook.host }}
+      certDir: {{ .Values.config.controllerManagerConfig.webhook.certDir }}
+    additionalFlags:
+    {{- with .Values.config.additionalFlags }}
+      {{- toYaml . | nindent 6 }}
+    {{- end -}}

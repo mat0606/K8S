@@ -1,0 +1,13 @@
+apiVersion: crd.nutanix.com/v1alpha1
+kind: NutanixCsiStorage
+metadata:
+  name: nutanixcsistorage
+  namespace: openshift-cluster-csi-drivers
+spec:
+  namespace: openshift-cluster-csi-drivers
+  tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/infra
+      operator: Exists
+      value: ''
+

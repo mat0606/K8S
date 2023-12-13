@@ -1,0 +1,130 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: appsyncprotections.dataservices.nutanix.com
+spec:
+  group: dataservices.nutanix.com
+  names:
+    kind: AppSyncProtection
+    listKind: AppSyncProtectionList
+    plural: appsyncprotections
+    singular: appsyncprotection
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: AppSyncProtection is the Schema for the appsyncprotections API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AppSyncProtectionSpec defines the desired state of AppSyncProtection
+            properties:
+              appConfigSyncIntervalSecs:
+                description: appConfigSyncIntervalSecs is the interval at which the
+                  application configuration is replicated, expressed in seconds.
+                type: integer
+              applicationName:
+                description: applicationName specifies the name of the Application
+                  defined elsewhere. Required.
+                type: string
+              replicationTargetName:
+                description: replicationTargetName is the name of the replication
+                  target. Required. Immutable.
+                type: string
+              suspend:
+                description: suspend disables the synchronous replication of the resources.
+                  Defaults to false.
+                type: boolean
+            required:
+            - appConfigSyncIntervalSecs
+            - applicationName
+            - replicationTargetName
+            type: object
+          status:
+            description: AppSyncProtectionStatus defines the observed state of AppSyncProtection
+            properties:
+              appConfigSyncState:
+                description: appConfigSyncState is the synchronization status of the
+                  application configuration.
+                properties:
+                  remoteApplicationSnapshotName:
+                    description: remoteApplicationSnapshotName is the name of the
+                      ApplicationSnapshot stored on the replication target.
+                    type: string
+                  syncState:
+                    description: Indicates the state of volume synchronous replication.
+                    type: string
+                required:
+                - remoteApplicationSnapshotName
+                - syncState
+                type: object
+              error:
+                description: error is the last observed error during snapshot creation,
+                  if any. Upon success after retry, this error field will be cleared.
+                properties:
+                  message:
+                    description: 'message is a string detailing the error encountered
+                      during failover. NOTE: message may be logged, and it should
+                      not contain sensitive information.'
+                    type: string
+                  reason:
+                    description: reason contains a programmatic identifier indicating
+                      the reason for the error.
+                    type: string
+                  time:
+                    description: time is the timestamp when the error was encountered.
+                    format: date-time
+                    type: string
+                type: object
+              volumeSyncStates:
+                description: volumeSyncStates describes the synchronization status
+                  of all the volumes that make the application.
+                items:
+                  properties:
+                    hostingStorageCluster:
+                      description: hostingStorageCluster is the storage cluster that's
+                        hosting the volume.
+                      type: string
+                    requiresSyncReplication:
+                      description: requiresSyncReplication indicates of sync replication
+                        is required for this volume.
+                      type: boolean
+                    syncState:
+                      description: syncState of the volume identified.
+                      type: string
+                    volumeClaimName:
+                      description: volumeClaimName is the name of the persistent volume
+                        claim.
+                      type: string
+                    volumeStorageUuid:
+                      description: UUID of the volume in the storage cluster.
+                      type: string
+                  required:
+                  - volumeClaimName
+                  type: object
+                type: array
+            required:
+            - appConfigSyncState
+            - volumeSyncStates
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

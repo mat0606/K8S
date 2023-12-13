@@ -1,0 +1,141 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: protectionplans.dataservices.nutanix.com
+spec:
+  group: dataservices.nutanix.com
+  names:
+    kind: ProtectionPlan
+    listKind: ProtectionPlanList
+    plural: protectionplans
+    singular: protectionplan
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: State
+      jsonPath: .status.state
+      name: State
+      type: string
+    - description: Last execution time
+      jsonPath: .status.lastExecutionTime
+      name: Last Execution Time
+      type: string
+    - description: Next scheduled execution time
+      jsonPath: .status.nextExecutionTime
+      name: Next Execution Time
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ProtectionPlan is the Schema for the protectionplans API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: A ProtectionPlan specifies the recipe that needs to be followed
+              for protecting an application. A protection plan includes the schedule
+              at which the snapshot must be taken, the locations at which the snapshots
+              must be made available and the policy for expiring snapshots at each
+              location. ProtectionPlanSpec defines the desired state of ProtectionPlan.
+            properties:
+              replicationPolicies:
+                description: 'Replication policies: Each replication policy specifies
+                  the location at which the snapshots must be made available at, the
+                  retention policy that must be used to drive the garbage collection
+                  on that location and any bandwidth policies (TODO) that must be
+                  observed when replicating the snapshots to those locations.'
+                items:
+                  description: ReplicationPolicyType specifies replication location,
+                    schedule and retention policy.
+                  properties:
+                    replicationTargetName:
+                      description: Name of the replication target.
+                      type: string
+                    retentionPolicy:
+                      description: Snapshot Retention policy at the target location.
+                        This could be different from the one used for the snapshotting.
+                      properties:
+                        retain:
+                          description: Number of the most recent snapshots to retain.
+                          type: integer
+                      required:
+                      - retain
+                      type: object
+                    schedulePolicyName:
+                      description: Replication schedule. This schedulePolicy should
+                        be one of the schedulePolicy used for snapshotting. This will
+                        ensure that there is a freshly cut snapshot available at the
+                        time of the replication. Required
+                      type: string
+                  required:
+                  - replicationTargetName
+                  - schedulePolicyName
+                  type: object
+                type: array
+              snapshotPolicies:
+                description: snapshot policies specify the local snapshot schedule
+                  and retention policy. One can have multiple snapshot policies i.e.
+                  one each for hourly, daily, and weekqly snapshotting.
+                items:
+                  description: SnapshotPolicy specifies snapshot schedule and retention.
+                  properties:
+                    retentionPolicy:
+                      description: Snapshot Retention policy.
+                      properties:
+                        retain:
+                          description: Number of the most recent snapshots to retain.
+                          type: integer
+                      required:
+                      - retain
+                      type: object
+                    schedulePolicyName:
+                      description: Schedule Policy which should be followed to take
+                        the snapshot. Required
+                      type: string
+                  required:
+                  - schedulePolicyName
+                  type: object
+                type: array
+              suspend:
+                description: suspend disables the scheduled actions required by this
+                  ProtectionPlan. All AppProtectionPlans using this ProtectionPlan
+                  will be suspended. Defaults to false.
+                type: boolean
+            type: object
+          status:
+            description: ProtectionPlanStatus defines the observed state of ProtectionPlan
+            properties:
+              lastExecutionTime:
+                description: lastExecutionTime indicates the last time the schedule
+                  occurred.
+                format: date-time
+                type: string
+              nextExecutionTime:
+                description: nextExecutionTime indicates when the schedule will occur
+                  next. Set only when the schedule is not suspended.
+                format: date-time
+                type: string
+              state:
+                description: state of the protection plan indicates one of the states
+                  as defined by the ProtectionPlanExecutionState enum.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,167 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: applications.dataservices.nutanix.com
+spec:
+  group: dataservices.nutanix.com
+  names:
+    kind: Application
+    listKind: ApplicationList
+    plural: applications
+    singular: application
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Application is the Schema for the applications API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ApplicationSpec defines the desired state of Application
+            properties:
+              applicationSelector:
+                description: applicationSelector specifies what resources to include
+                  as a part of the application. If not specified, all the resources
+                  in the applied namespace will be included.
+                properties:
+                  resourceLabelSelectors:
+                    description: A list of kind label selectors. The selectors are
+                      ORed.
+                    items:
+                      properties:
+                        excludeResources:
+                          description: Name of all the resources to be excluded. If
+                            this list is omitted or empty, no resources are excluded
+                            from consideration.
+                          items:
+                            description: GroupKind specifies a Group and a Kind, but
+                              does not force a version.  This is useful for identifying
+                              concepts during lookup stages without having partially
+                              valid types
+                            properties:
+                              group:
+                                type: string
+                              kind:
+                                type: string
+                            required:
+                            - group
+                            - kind
+                            type: object
+                          type: array
+                        includeResources:
+                          description: Name of all the resources to be included as
+                            a part of the Application. If this list is empty or omitted,
+                            all resources will be considered.
+                          items:
+                            description: GroupKind specifies a Group and a Kind, but
+                              does not force a version.  This is useful for identifying
+                              concepts during lookup stages without having partially
+                              valid types
+                            properties:
+                              group:
+                                type: string
+                              kind:
+                                type: string
+                            required:
+                            - group
+                            - kind
+                            type: object
+                          type: array
+                        labelSelector:
+                          description: labelSelector is a label query over all API
+                            resources in the same namespace as the namespace of the
+                            Application. If unspecified, no label predicates will
+                            be evaluated.
+                          properties:
+                            matchExpressions:
+                              description: matchExpressions is a list of label selector
+                                requirements. The requirements are ANDed.
+                              items:
+                                description: A label selector requirement is a selector
+                                  that contains values, a key, and an operator that
+                                  relates the key and values.
+                                properties:
+                                  key:
+                                    description: key is the label key that the selector
+                                      applies to.
+                                    type: string
+                                  operator:
+                                    description: operator represents a key's relationship
+                                      to a set of values. Valid operators are In,
+                                      NotIn, Exists and DoesNotExist.
+                                    type: string
+                                  values:
+                                    description: values is an array of string values.
+                                      If the operator is In or NotIn, the values array
+                                      must be non-empty. If the operator is Exists
+                                      or DoesNotExist, the values array must be empty.
+                                      This array is replaced during a strategic merge
+                                      patch.
+                                    items:
+                                      type: string
+                                    type: array
+                                required:
+                                - key
+                                - operator
+                                type: object
+                              type: array
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              description: matchLabels is a map of {key,value} pairs.
+                                A single {key,value} in the matchLabels map is equivalent
+                                to an element of matchExpressions, whose key field
+                                is "key", the operator is "In", and the values array
+                                contains only "value". The requirements are ANDed.
+                              type: object
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                    type: array
+                type: object
+                x-kubernetes-map-type: atomic
+              applicationSnapshotName:
+                description: applicationSnapshotName specifies the name of the ApplicationSnapshot
+                  that must be restored.
+                type: string
+            type: object
+          status:
+            description: ApplicationStatus defines the observed state of Application
+            properties:
+              creationTime:
+                format: date-time
+                type: string
+              error:
+                description: error is the last observed error, if any. Upon success
+                  after retry, this error field will be cleared.
+                properties:
+                  message:
+                    description: message is a string detailing the encountered error.
+                    type: string
+                  time:
+                    description: time is the timestamp when the error was encountered.
+                    format: date-time
+                    type: string
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
