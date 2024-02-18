@@ -66,7 +66,7 @@ defaultStorageClass: none
 createPrismCentralSecret: true
 prismCentralEndPoint: 10.38.179.39
 pcUsername: admin
-pcPassword: nx2Tech386! 
+pcPassword: nx2Tech068! 
 pcSecretName: ntnx-pc-secret
 
 # Nutanix Prism Element Secret which is used by dynamicFileClass.
@@ -80,7 +80,7 @@ secretName: ntnx-secret
 
 # Volumes Settings
 #
-storageContainer: default-container-80942
+storageContainer: default-container-165964 
 fsType: ext4
 
 lvmVolume: false

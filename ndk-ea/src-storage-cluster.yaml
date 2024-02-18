@@ -1,0 +1,7 @@
+apiVersion: dataservices.nutanix.com/v1alpha1
+kind: StorageCluster
+metadata:
+  name: 179-src-storage-cluster
+spec:
+  handle: 00061138-b744-cf31-0000-00000002884c
+  availabilityZoneHandle: b762a347-c750-4f1d-b99b-bb30ee4a0dc3
